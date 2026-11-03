@@ -12,6 +12,26 @@ Katalog TEFA adalah aplikasi untuk mempromosikan produk Teaching Factory. Penggu
 
 Untuk menjalankan mode pengembangan dengan Vite, gunakan `npm run dev` di terminal terpisah.
 
+## Deploy ke Vercel
+
+Proyek ini menggunakan Laravel, jadi deploy harus memakai **Container Runtime**, bukan output situs statis `dist`. `Dockerfile.vercel`, `Caddyfile`, dan `vercel.json` menyiapkan PHP/FrankenPHP, build aset Vite, dan mengarahkan request ke Laravel.
+
+Pada project Vercel yang sudah ada:
+
+1. Pastikan **Root Directory** menunjuk ke folder repo ini.
+2. Atur **Framework Preset** ke **Container**. Hapus override **Output Directory** `dist` jika masih terpasang.
+3. Tambahkan environment variables:
+   - `APP_KEY` — buat satu kali dengan `php artisan key:generate --show`; simpan nilainya sebagai secret di Vercel.
+   - `APP_URL` — URL deployment.
+   - `APP_ENV=production`, `APP_DEBUG=false`, `LOG_CHANNEL=stderr`.
+   - `DB_CONNECTION=pgsql` dan `DB_URL` dari database PostgreSQL terkelola.
+   - `SESSION_DRIVER=database`, `CACHE_STORE=database`, `QUEUE_CONNECTION=database`.
+   - `FILESYSTEM_DISK=s3` dan kredensial bucket S3-compatible. Untuk Cloudflare R2, isi `AWS_ENDPOINT`, `AWS_URL` (domain publik bucket), `AWS_BUCKET`, `AWS_DEFAULT_REGION=auto`, `AWS_USE_PATH_STYLE_ENDPOINT=true`, `AWS_ACCESS_KEY_ID`, dan `AWS_SECRET_ACCESS_KEY`.
+4. Jalankan migrasi pada database deployment sebagai langkah release terpisah: `php artisan migrate --force`. Jangan menjalankan migrasi saat container mulai, karena beberapa instance bisa hidup bersamaan.
+5. Push perubahan ke branch Git yang terhubung untuk membuat deployment preview.
+
+SQLite dan disk lokal tetap digunakan untuk pengembangan lokal. File pada filesystem container Vercel tidak persisten, jadi jangan gunakan disk lokal untuk foto produksi. Jangan simpan kredensial produksi atau `.env` di Git.
+
 ## Membuat akun admin
 
 Isi nilai berikut di `.env` sebelum menjalankan seeder:
